@@ -43,7 +43,6 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           elevation: 5,
           child: const Icon(Icons.check),
           onPressed: () {
-            print("data saved to database");
           }),
       appBar: AppBar(
         centerTitle: true,
