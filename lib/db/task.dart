@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // used to display UI
 const String noRepeat = "No Repeat";
+const defaultListID = 1;
 
 // repeat cycle options
 enum RepeatCycle {
@@ -50,13 +51,13 @@ class Task {
   // constructor of new task
   Task({
     required this.taskName,
-    required this.taskListID,
     required this.taskID,
     required this.isFinished,
     required this.isRepeating,
     this.parentTaskID,
     this.deadlineDate,
     this.deadlineTime,
+    required this.taskListID,
   });
 
   // update the task as finished
@@ -74,8 +75,8 @@ class Task {
           deadlineDate == null ? null : deadlineDate!.microsecondsSinceEpoch,
       "deadlineTime":
           deadlineTime == null ? null : intFromTimeofDay(deadlineTime!),
-      "isFinished": 0,
-      "isRepeating": 0,
+      "isFinished": isFinished == true ? 1 : 0,
+      "isRepeating": isRepeating == true ? 1 : 0,
     };
     return taskAsMap;
   }
@@ -131,16 +132,28 @@ class RepeatingTask {
 }
 
 class TaskList {
-  int taskListID;
-  String taskListName;
-  List<Task> nonRepeatingTasks;
-  List<RepeatingTask> repeatingTasks;
-  List<Task> activeRepeatingTaskInstances;
+  int listID;
+  String listName;
+  bool isActive;
   TaskList({
-    required this.nonRepeatingTasks,
-    required this.repeatingTasks,
-    required this.activeRepeatingTaskInstances,
-    required this.taskListID,
-    required this.taskListName,
+    required this.listID,
+    required this.listName,
+    required this.isActive,
   });
+
+  static TaskList fromMap(Map<String, dynamic> taskListAsMap) {
+    return TaskList(
+      listID: taskListAsMap["listID"],
+      listName: taskListAsMap["listName"],
+      isActive: taskListAsMap["isActive"] == 1 ? true : false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "listID": listID,
+      "listName": listName,
+      "isActive": isActive == true ? 1 : 0,
+    };
+  }
 }

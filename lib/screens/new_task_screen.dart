@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:todoapplication/db/sqflite.dart';
+import 'package:provider/provider.dart';
+import 'package:todoapplication/db/shared_data.dart';
 import 'package:todoapplication/db/task.dart';
-import 'package:todoapplication/route/routing.dart' as routing;
 
 class NewTaskScreen extends StatefulWidget {
   const NewTaskScreen({Key? key, this.task}) : super(key: key);
@@ -18,7 +18,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     isFinished: false,
     isRepeating: false,
     taskName: "",
-    taskListID: 0,
+    taskListID: defaultListID,
     taskID: -1,
     parentTaskID: null,
     deadlineDate: null,
@@ -96,38 +96,18 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   }
 
   void saveNewTask() async {
-    Map<String, dynamic>? taskAsMap = task.toMap();
-    taskAsMap.remove("taskID");
-    int? taskId = await SqliteDB.insertTask(taskAsMap);
-    if (taskId == null) {
-    } else {
-      Navigator.pop(context);
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenRoute, (route) => false);
-    }
+    Provider.of<TodosData>(context, listen: false).addTask(task);
+    Navigator.pop(context);
   }
 
   void updateTask() async {
-    bool success = await SqliteDB.updateTask(task);
-    if (success) {
-      print("success");
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenRoute, (route) => false);
-    } else {
-      // ignore: todo
-      //TODO:: show some error
-    }
+    Provider.of<TodosData>(context, listen: false).updateTask(task);
+    Navigator.pop(context);
   }
 
   void deleteTask() async {
-    bool success = await SqliteDB.deleteTask(task);
-    if (success) {
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenRoute, (route) => false);
-    } else {
-      // ignore: todo
-      //TODO::show error
-    }
+    Provider.of<TodosData>(context, listen: false).deleteTask(task);
+    Navigator.pop(context);
   }
 
   @override
@@ -375,11 +355,61 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
             Row(
               children: [
                 const SizedBox(width: 10),
-                DropdownButton<String>(
-                  items: dropDownItemCreator(["Default"]),
-                  value: "Default",
-                  onChanged: (value) {},
+                Expanded(
+                  child:
+                      Consumer<TodosData>(builder: (context, todosData, child) {
+                    List<DropdownMenuItem<int>> menuItems = [];
+                    for (var taskList in todosData.activeListsByID.values) {
+                      menuItems.add(
+                        DropdownMenuItem<int>(
+                          child: Text(taskList.listName),
+                          value: taskList.listID,
+                        ),
+                      );
+                    }
+                    return DropdownButton<int>(
+                      isExpanded: true,
+                      items: menuItems,
+                      value: task.taskListID,
+                      onChanged: (value) {
+                        task.taskListID = value ?? task.taskListID;
+                        setState(() {});
+                      },
+                    );
+                  }),
                 ),
+                const SizedBox(width: 5),
+                CustomIconButton(
+                    iconData: Icons.playlist_add,
+                    onPressedFunction: () {
+                      String listName = "";
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Add a list"),
+                            content: TextField(
+                              onChanged: (value) {
+                                listName = value;
+                              },
+                              decoration: const InputDecoration(
+                                  hintText: "Enter name of the list"),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: const Text("OK"),
+                                onPressed: () {
+                                  Provider.of<TodosData>(context, listen: false)
+                                      .addList(listName);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                const SizedBox(width: 5),
               ],
             ),
           ],
