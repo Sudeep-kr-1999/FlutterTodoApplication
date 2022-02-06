@@ -44,6 +44,7 @@ class MyApp extends StatelessWidget {
           if (pageName == routing.homeScreenRoute) {
             return MaterialPageRoute(builder: (context) => const MyHomePage());
           }
+          return null;
         },
       ),
     );
